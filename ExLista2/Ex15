@@ -1,0 +1,51 @@
+def sacar(valor_saque, valor_total):
+    if (valor_saque > valor_total):
+        print(f"Você quer retirar mais do que tem, saldo atual: {valor_total}")
+        return valor_total
+    else:
+       mensagem = f"Saque realizado no valor de {valor_saque}"
+       global historico
+       historico.append(mensagem)
+    return valor_total - valor_saque 
+
+#-------------------------------------------------------------------------------------------
+
+def depositar(valor_depositar, valor_total):
+    if(valor_depositar < 0):
+        print("Ta querendo roubar a firma")
+        return valor_total
+    mensagem = f"Deposito realizado no valor de {valor_depositar}"
+    global historico
+    historico.append(mensagem)
+    return valor_total + valor_depositar
+
+#------------------------------------------------------------------------------------------
+
+def mostrar_extrato(historico, saldo):
+    for i in historico:
+        print(i)
+    print(f"Saldo atual {saldo}")
+
+historico = []
+saldo = 1000.0
+
+while (True):
+    print(" Menu de Opções: \n ------------------------------")
+    print(" 1- Sacar\n 2- Depositar \n 3- Extrato \n 4- Sair")
+    resp = int(input("Resposta: "))
+
+    if(resp == 1):
+        saque = int(input("Quanto você quer sacar? "))
+        saldo = sacar(saque, saldo)
+
+    elif(resp == 2):
+        deposito = int(input("Quanto você quer depositar? "))
+        saldo = depositar(deposito, saldo)
+
+    elif(resp == 3):
+        mostrar_extrato(historico, saldo)
+
+    else:
+        print("Saindo do sistema")
+        break
+  
