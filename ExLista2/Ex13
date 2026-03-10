@@ -1,0 +1,26 @@
+def total_faturamento(week_days):
+    soma = 0
+    for i in week_days:
+        soma += i
+    return soma
+
+def maior_dia (week_days):
+    maior = 0
+    for i in range(0, len(week_days)):
+        maior = week_days[0]
+        if (maior < i):
+            maior = i
+    return maior
+
+week_days = []
+for i in range(7):
+    day_value = float(input(f"Digite o valor faturado para o {i+1}° dia da semana"))
+    if(day_value < 1):
+        print("Ta mentindo, tem como faturar negativo nao")
+    else:
+        week_days.append(day_value)
+
+faturamntetotal = total_faturamento(week_days)
+diamaiorfatura = maior_dia(week_days)
+
+print(f"O faturamento total da semana foi de {faturamntetotal}, o dia de maior fatura foi o {diamaiorfatura+1}° da semana faturando {week_days[diamaiorfatura]}, fazendo uma média de {faturamntetotal/7.0}, ")
