@@ -1,0 +1,27 @@
+def calc_grade (num1, num2, num3):
+    return (num1 + num2 + num3) /3
+
+students = ["teste"] * 1
+grades = [0] * 1
+student = "nada"
+
+
+
+
+for  i in range(0,len(students)):
+    student = input("Digite o nome de um aluno")
+    students.append(student)
+    grade1 = int(input("Digite a primeira nota dele"))
+    grade2 = int(input("Digite a segunda nota dele"))
+    grade3 = int(input("Digite a terceira nota dele"))
+    final_grade = calc_grade(grade1, grade2, grade3)
+    grades.append(final_grade)
+
+
+for i in range(0,len(students)):
+    print ("Notas do aluno", students[i])
+    print (grades[i])
+    if (grades[i] < 70):
+        print("Situação: Reprovada")
+    else:
+        print("Situação: Aprovada")

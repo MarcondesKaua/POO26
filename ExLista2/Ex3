@@ -1,0 +1,11 @@
+def somar_valores (num1, num2):
+    return num1+num2
+
+
+
+num1 = int(input("Digite um valor "))
+
+num2 = int(input("Digite outro valor "))
+
+resp = somar_valores(num1, num2)
+print(f"A soma desses numeros é {resp}" )

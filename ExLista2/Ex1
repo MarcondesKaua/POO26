@@ -1,0 +1,4 @@
+numeros = [0] * 10
+for i in numeros:
+    print (i)
+    

@@ -1,0 +1,4 @@
+vet = ["Paranavai", "Londrina", "Maringá", "Nova Esperança", "Curitiba"] 
+ 
+for i in vet:
+    print(i)
