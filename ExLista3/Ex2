@@ -1,0 +1,27 @@
+def desc_alter(precos_prod, desc):
+    for i in range(len(precos_prod)):
+        precos_prod[i] -= precos_prod[i] * (desc / 100)
+
+nomes_prod= []
+precos_prod = []
+while(True):
+    menu = int(input("1-Cadastrar produtos \n2-Listar produtos\n3-Aplicar desconto"))
+    
+    if(menu == 1):
+        nomes_prod.append(input("Qual o nome do produto ?: "))
+        precos_prod.append(float(input("E qual o preço dele?: ")))
+
+    elif menu == 2:
+        for nome, preco in zip(nomes_prod, precos_prod):
+            print(f"Nome: {nome}, preço {preco}\n")
+    
+    elif menu == 3:
+        desc = int(input("Qual a porcentagem de desconto ?"))
+        if(desc<0 or desc>100):
+            print("Ta locao truta")
+        else:
+            desc_alter(precos_prod, desc)     
+    else:
+        break
+    
+      
