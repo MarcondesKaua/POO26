@@ -1,5 +1,5 @@
 class Equipes: 
-    def __init__(self, ):
+    def __init__(self):
         self.nome = ""
         self.modalidade = ""
         self.jogadores = []
@@ -12,9 +12,13 @@ class Equipes:
             print(f"Jogar {jogador.nome} já está cadastrado nessa equipe")
 
     def apresentar_equipe(self):
-        for i in self.jogadores: 
-            print(self.nome, i.apresentar()) 
+        return self.nome
+         
 
+    def apresentar_jogadores_equipe(self):
+        for i in self.jogadores: 
+            print(i.apresentar())
+            
     def preencher_info(self):
         self.nome = input("Digite o nome da equipe: ")
         self.modalidade = input("Digite a modalidade: ")
@@ -28,7 +32,7 @@ class Jogadores:
         self.turma = ""
 
     def apresentar(self):
-        print(self.nome, "-", self.nickname)
+        return f"{self.nome} - {self.nickname}"
     
     def preencher_info(self):
         self.nome = input("Digite o nome do jogador: ")
