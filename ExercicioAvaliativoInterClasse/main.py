@@ -28,7 +28,7 @@ c1.nome = "Coisadinhas"
 
 list_jogadores.append(j1)
 list_jogadores.append(j2)
-c1.cadastrar_jogador(j1)
+c1.cadastrar_jogador(j1, list_equipes)
 list_equipes.append(c1)
 
 
@@ -37,12 +37,12 @@ while (True):
     try:
         resp = int(input("Opção: "))
     except:
-        print("Digita número nego")
+        print("Digita número")
         continue
     
     if resp == 1:
         jogador = Jogadores()
-        jogador.preencher_info()
+        jogador.preencher_info(list_jogadores)
         list_jogadores.append(jogador)
     
     elif resp == 2:
@@ -64,7 +64,7 @@ while (True):
             id_jogador = int(input("Qual o jogador vc quer: "))
 
             try:
-                list_equipes[id_equipe-1].cadastrar_jogador(list_jogadores[id_jogador-1])
+                list_equipes[id_equipe-1].cadastrar_jogador(list_jogadores[id_jogador-1], list_equipes)
             except:
                 print("Deu algum erro")
         else: 
