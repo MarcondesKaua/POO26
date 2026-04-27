@@ -98,3 +98,6 @@ while (True):
                     break
             if not encontrado:
                 print("Nenhum jogador com esse nick encontrado")
+    elif resp == 0:
+        print("Saindo do programa")
+        break
