@@ -15,10 +15,43 @@ class Player(arcade.Sprite):
         self.center_x = 100
         self.center_y = 200
 
+class Inimigo(arcade.Sprite):
+    def __init__(self, x, y):
+        super().__init__("fantasma_right.png", 1)
+        self.center_x = x
+        self.center_y = y
+        self.change_x = 2
+        self.change_y = 2
+
+        self.textura_direita = self.texture
+    
+        self.textura_esquerda = arcade.load_texture("fantasma_left.png")
+    def on_update(self):
+        self.center_x += self.change_x
+        self.center_y += self.change_y
+
+        if  self.right >= LARGURA:
+            self.right = LARGURA
+            self.change_x *= -1
+            self.texture = self.textura_esquerda
+
+
+        if self.left <= 0 :
+            self.left = 0
+            self.change_x *= -1
+            self.texture = self.textura_direita
+
+        if  self.top > ALTURA:
+            self.top = ALTURA
+            self.change_y *= -1
+
+        if self.bottom < 0 :
+            self.bottom = 0
+            self.change_y *= -1
 
 class Coin(arcade.Sprite):
     def __init__(self, x, y):
-        super().__init__("coin.png", 0.05)
+        super().__init__("coin.png", 1)
         self.center_x = x
         self.center_y = y
 
@@ -27,6 +60,7 @@ class JogoView(arcade.View):
     def __init__(self):
         super().__init__()
         self.player = None
+        self.lista_inimigos = None
         self.lista_player = None
         self.lista_plataformas = None
         self.lista_moedas = None
@@ -43,6 +77,9 @@ class JogoView(arcade.View):
         self.lista_player = arcade.SpriteList()
         self.lista_player.append(self.player)
 
+        self.lista_inimigos = arcade.SpriteList()
+        inimigos = Inimigo(500, 100)
+        self.lista_inimigos.append(inimigos)
         # --- Plataformas ---
         self.lista_plataformas = arcade.SpriteList(use_spatial_hash=True)
 
@@ -87,6 +124,7 @@ class JogoView(arcade.View):
         self.lista_plataformas.draw()
         self.lista_moedas.draw()
         self.lista_player.draw()
+        self.lista_inimigos.draw()
 
         arcade.Text(
             f"Moedas: {self.pontuacao}",
@@ -102,10 +140,10 @@ class JogoView(arcade.View):
         for mx, my in moedas_pos:
             self.lista_moedas.append(Coin(mx, my))
 
-        for _ in range(500):
-            mx = random.randint(50, LARGURA-50)
-            my = random.randint(50, ALTURA - 50)
-            self.lista_moedas.append(Coin(mx,my))
+        # for _ in range(500):
+        #     mx = random.randint(50, LARGURA-50)
+        #     my = random.randint(50, ALTURA - 50)
+        #     self.lista_moedas.append(Coin(mx,my))
 
 
     def on_update(self, delta_time):
@@ -114,11 +152,40 @@ class JogoView(arcade.View):
         # Limita horizontalmente
         self.player.left = max(self.player.left, 0)
         self.player.right = min(self.player.right, LARGURA)
+        for inimigo in self.lista_inimigos:
+            inimigo.on_update()
         if self.player.top >= ALTURA:
             self.player.top = ALTURA
             self.player.change_y=0
 
-        # Coleta moedas
+         
+        
+        colisao_inimigo = arcade.check_for_collision_with_list(
+            self.player, self.lista_inimigos
+        )
+        
+        
+        if len(colisao_inimigo) > 0:
+            self.setup()  
+            return
+
+        
+
+
+        moedas_coletadas = arcade.check_for_collision_with_list(
+            self.player, self.lista_moedas
+        )
+        for moeda in moedas_coletadas:
+            moeda.remove_from_sprite_lists()
+            self.pontuacao += 1
+
+        # Caiu do mapa — reinicia
+        if self.player.top < 0:
+            self.setup()
+
+        
+
+
         moedas_coletadas = arcade.check_for_collision_with_list(
             self.player, self.lista_moedas
         )
