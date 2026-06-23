@@ -207,7 +207,9 @@ class JogoView(arcade.View):
          
     def on_key_press(self, key, modifiers):
         if key == arcade.key.ESCAPE:
-            arcade.close_window()
+            # Em vez de fechar, cria a TelaInicial e volta para ela
+            tela_inicial = TelaInicial()
+            self.window.show_view(tela_inicial)
         elif key == arcade.key.LEFT:
             self.player.texture = arcade.load_texture("Left.png")
             self.player.change_x = -VELOCIDADE
