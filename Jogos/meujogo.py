@@ -18,20 +18,15 @@ class Player(arcade.Sprite):
         self.i_frame_time = 0.0
 
 class Inimigo(arcade.Sprite):
-   
     def __init__(self, x, y, pequeno=False):
-       
         escala = 0.5 if pequeno else 1
-        
         super().__init__("fantasma_right.png", escala)
         self.center_x = x
         self.center_y = y
         self.change_x = 2 if not pequeno else 3
         self.change_y = 2 if not pequeno else 3
         
-       
         self.pequeno = pequeno
-
         self.textura_direita = self.texture
         self.textura_esquerda = arcade.load_texture("fantasma_left.png")
 
@@ -43,7 +38,6 @@ class Inimigo(arcade.Sprite):
         self.center_x += self.change_x
         self.center_y += self.change_y
 
-       
         if self.right >= LARGURA:
             self.right = LARGURA
             self.change_x *= -1
@@ -69,6 +63,26 @@ class Coin(arcade.Sprite):
         self.center_y = y
 
 
+class TelaInicial(arcade.View):
+    def __init__(self):
+        super().__init__()
+
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text("COLETOR DE MOEDAS", LARGURA / 2, 400, arcade.color.WHITE, 32, anchor_x="center")
+        arcade.draw_text("Pressione [J] para Jogar", LARGURA / 2, 300, arcade.color.LIGHT_SEA_GREEN, 18, anchor_x="center")
+        arcade.draw_text("Pressione [ESC] para Sair", LARGURA / 2, 240, arcade.color.LIGHT_SEA_GREEN, 18, anchor_x="center")
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.J:
+            # CORREÇÃO: Criando a view correta (JogoView) e rodando o setup dela
+            tela_jogo = JogoView() 
+            tela_jogo.setup()
+            self.window.show_view(tela_jogo) 
+        elif key == arcade.key.ESCAPE:
+            arcade.close_window()
+
+            
 class JogoView(arcade.View):
     def __init__(self):
         super().__init__()
@@ -98,7 +112,7 @@ class JogoView(arcade.View):
         self.lista_inimigos.append(inimigos)
         self.lista_inimigos.append(inimigos_pequeno1)
         self.lista_inimigos.append(inimigos_pequeno2)
-        # --- Plataformas ---
+
         self.lista_plataformas = arcade.SpriteList(use_spatial_hash=True)
 
         # Chão
@@ -118,19 +132,11 @@ class JogoView(arcade.View):
             plat.center_y = py
             self.lista_plataformas.append(plat)
 
-        # --- Moedas ---
-
         self.lista_moedas = arcade.SpriteList(use_spatial_hash=True)
         moedas_pos = [(200, 200), (400, 310), (600, 260), (300, 460), (550, 460)]
         for mx, my in moedas_pos:
             self.lista_moedas.append(Coin(mx, my))
 
-        # for _ in range(5):
-        #     mx = random.randint(50, LARGURA-50)
-        #     my = random.randint(50, ALTURA - 50)
-        #     self.lista_moedas.append(Coin(mx,my))
-
-        # --- Física com gravidade ---
         self.fisica = arcade.PhysicsEnginePlatformer(
             self.player,
             gravity_constant=GRAVIDADE,
@@ -139,7 +145,7 @@ class JogoView(arcade.View):
 
     def on_draw(self):
         self.clear()
-        arcade.draw_texture_rect(texture= self.fundo, rect=arcade.XYWH(x=LARGURA/2, y=ALTURA/2, width= LARGURA, height= ALTURA))
+        arcade.draw_texture_rect(texture=self.fundo, rect=arcade.XYWH(x=LARGURA/2, y=ALTURA/2, width=LARGURA, height=ALTURA))
         self.lista_plataformas.draw()
         self.lista_moedas.draw()
         self.lista_player.draw()
@@ -159,29 +165,22 @@ class JogoView(arcade.View):
         for mx, my in moedas_pos:
             self.lista_moedas.append(Coin(mx, my))
 
-        # for _ in range(500):
-        #     mx = random.randint(50, LARGURA-50)
-        #     my = random.randint(50, ALTURA - 50)
-        #     self.lista_moedas.append(Coin(mx,my))
-
-
     def on_update(self, delta_time):
         self.fisica.update()
 
-        # Limita horizontalmente
         self.player.left = max(self.player.left, 0)
         self.player.right = min(self.player.right, LARGURA)
         for inimigo in self.lista_inimigos:
             inimigo.on_update()
+            
         if self.player.top >= ALTURA:
             self.player.top = ALTURA
-            self.player.change_y=0
+            self.player.change_y = 0
 
         if self.player.i_frame:
             self.player.i_frame_time -= delta_time
-            if self.player.i_frame_time <=0 :
+            if self.player.i_frame_time <= 0:
                 self.player.i_frame = False 
-        
 
         colisao_inimigo = arcade.check_for_collision_with_list(
             self.player, self.lista_inimigos
@@ -195,10 +194,6 @@ class JogoView(arcade.View):
                     self.pontuacao -= 1
                     self.player.i_frame = True
                     self.player.i_frame_time = 1.0
-                
-
-        
-
 
         moedas_coletadas = arcade.check_for_collision_with_list(
             self.player, self.lista_moedas
@@ -207,7 +202,6 @@ class JogoView(arcade.View):
             moeda.remove_from_sprite_lists()
             self.pontuacao += 1
 
-        # Caiu do mapa — reinicia
         if self.player.top < 0:
             self.setup()      
          
@@ -228,7 +222,6 @@ class JogoView(arcade.View):
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.LEFT:
-            # Se direita ainda estiver pressionada, continua indo pra direita
             if self.window.keyboard[arcade.key.RIGHT]:
                 self.player.change_x = VELOCIDADE
                 self.player.texture = arcade.load_texture("Rigth.png")
@@ -244,19 +237,13 @@ class JogoView(arcade.View):
                 self.player.texture = arcade.load_texture("front.png")
 
 
-class JanelaJogo(arcade.Window):
-    def __init__(self):
-        super().__init__(LARGURA, ALTURA, TITULO)
-
-    def setup(self):
-        view = JogoView()
-        view.setup()
-        self.show_view(view)
-
-
 def main():
-    jogo = JanelaJogo()
-    jogo.setup()
+    # CORREÇÃO: Cria a janela física padrão do arcade
+    janela = arcade.Window(LARGURA, ALTURA, TITULO)
+    # Cria a tela inicial de menu
+    menu = TelaInicial()
+    # Mostra o menu e inicia o loop do jogo
+    janela.show_view(menu)
     arcade.run()
 
 
