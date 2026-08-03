@@ -136,7 +136,12 @@ class TelaDesenvolvedores(arcade.View):
         self.fantasma_icon = arcade.Sprite("fantasma_right.png", scale=0.8)
         self.fantasma_icon.center_x = LARGURA / 2 - 130
         self.fantasma_icon.center_y = 338
+
+		self.fantasma_icon2 = arcade.Sprite("fantasma_left.png", scale = 0.8)
+		self.fantasma_icon2.center_x = LARGURA / 2 - 130
+		self.fantasma_icon2.center_y = 278
         self.lista_icones.append(self.fantasma_icon)
+		self.lista_icones.append(saelf.fantasma_icon2)
 
     def on_draw(self):
         self.clear()
@@ -146,7 +151,8 @@ class TelaDesenvolvedores(arcade.View):
         # Desenha o fantasma e os textos
         self.lista_icones.draw()
         arcade.draw_text("Kauã Marcondes", LARGURA / 2 + 20, 330, arcade.color.WHITE, 20, anchor_x="center")
-        arcade.draw_text("• quem pagar pagar mais", LARGURA / 2, 270, arcade.color.WHITE, 20, anchor_x="center")
+		
+        arcade.draw_text("Mateus Vinicius Geraldo", LARGURA / 2, 270, arcade.color.WHITE, 20, anchor_x="center")
         
         arcade.draw_text("Pressione [ESC] para voltar ao menu", LARGURA / 2, 120, arcade.color.GRAY, 14, anchor_x="center")
 
