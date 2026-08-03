@@ -116,7 +116,7 @@ class TelaTutorial(arcade.View):
         self.clear()
         arcade.set_background_color(arcade.color.DARK_SLATE_BLUE)
         arcade.draw_text("TUTORIAL", LARGURA / 2, 450, arcade.color.WHITE, 28, anchor_x="center")
-        arcade.draw_text("• Use SETAS ou A/D para mover para os lados.", LARGURA / 2, 360, arcade.color.LIGHT_GRAY, 16, anchor_x="center")
+        arcade.draw_text("• Use SETAS para mover para os lados.", LARGURA / 2, 360, arcade.color.LIGHT_GRAY, 16, anchor_x="center")
         arcade.draw_text("• Use ESPAÇO ou SETA PARA CIMA para pular.", LARGURA / 2, 310, arcade.color.LIGHT_GRAY, 16, anchor_x="center")
         arcade.draw_text("• Colete 25 moedas o mais rápido possível para vencer!", LARGURA / 2, 260, arcade.color.LIGHT_GRAY, 16, anchor_x="center")
         arcade.draw_text("• Cuidado com os fantasmas para não perder pontos.", LARGURA / 2, 210, arcade.color.LIGHT_GRAY, 16, anchor_x="center")
