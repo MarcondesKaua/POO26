@@ -131,17 +131,20 @@ class TelaTutorial(arcade.View):
 class TelaDesenvolvedores(arcade.View):
     def __init__(self):
         super().__init__()
-        # Sprite do fantasma ao lado do nome
+
         self.lista_icones = arcade.SpriteList()
+
         self.fantasma_icon = arcade.Sprite("fantasma_right.png", scale=0.8)
         self.fantasma_icon.center_x = LARGURA / 2 - 130
         self.fantasma_icon.center_y = 338
 
-		self.fantasma_icon2 = arcade.Sprite("fantasma_left.png", scale = 0.8)
-		self.fantasma_icon2.center_x = LARGURA / 2 - 130
-		self.fantasma_icon2.center_y = 278
+        self.fantasma_icon2 = arcade.Sprite("fantasma_left.png", scale=0.8)
+        self.fantasma_icon2.center_x = LARGURA / 2 - 150
+        self.fantasma_icon2.center_y = 278
+
         self.lista_icones.append(self.fantasma_icon)
-		self.lista_icones.append(saelf.fantasma_icon2)
+        self.lista_icones.append(self.fantasma_icon2)
+
 
     def on_draw(self):
         self.clear()
