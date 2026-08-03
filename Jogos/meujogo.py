@@ -34,27 +34,43 @@ class Inimigo(arcade.Sprite):
         self.center_x = random.randint(50, LARGURA - 50)
         self.center_y = random.randint(100, ALTURA - 50)
 
-    def on_update(self):
-        self.center_x += self.change_x
-        self.center_y += self.change_y
+    def on_update(self, player=None):
+        if not self.pequeno and player is not None:
+            # Fantasma grande segue o jogador
+            velocidade_fantasma = 1.5
+            if self.center_x < player.center_x:
+                self.center_x += velocidade_fantasma
+                self.texture = self.textura_direita
+            elif self.center_x > player.center_x:
+                self.center_x -= velocidade_fantasma
+                self.texture = self.textura_esquerda
 
-        if self.right >= LARGURA:
-            self.right = LARGURA
-            self.change_x *= -1
-            self.texture = self.textura_esquerda
+            if self.center_y < player.center_y:
+                self.center_y += velocidade_fantasma
+            elif self.center_y > player.center_y:
+                self.center_y -= velocidade_fantasma
+        else:
+            # Comportamento padrão (bouncing) para os fantasmas pequenos
+            self.center_x += self.change_x
+            self.center_y += self.change_y
 
-        if self.left <= 0:
-            self.left = 0
-            self.change_x *= -1
-            self.texture = self.textura_direita
+            if self.right >= LARGURA:
+                self.right = LARGURA
+                self.change_x *= -1
+                self.texture = self.textura_esquerda
 
-        if self.top > ALTURA:
-            self.top = ALTURA
-            self.change_y *= -1
+            if self.left <= 0:
+                self.left = 0
+                self.change_x *= -1
+                self.texture = self.textura_direita
 
-        if self.bottom < 0:
-            self.bottom = 0
-            self.change_y *= -1
+            if self.top > ALTURA:
+                self.top = ALTURA
+                self.change_y *= -1
+
+            if self.bottom < 0:
+                self.bottom = 0
+                self.change_y *= -1
 
 class Coin(arcade.Sprite):
     def __init__(self, x, y):
@@ -82,6 +98,38 @@ class TelaInicial(arcade.View):
         elif key == arcade.key.ESCAPE:
             arcade.close_window()
 
+
+class TelaVitoria(arcade.View):
+    def __init__(self):
+        super().__init__()
+
+    def on_draw(self):
+        self.clear()
+        arcade.set_background_color(arcade.color.BLACK)
+        arcade.draw_text("Você venceu, parabens, coletou 25 moedas", LARGURA / 2, ALTURA / 2, arcade.color.WHITE, 20, anchor_x="center")
+        arcade.draw_text("Pressione [ESC] para voltar ao menu", LARGURA / 2, ALTURA / 2 - 50, arcade.color.GRAY, 14, anchor_x="center")
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            tela_inicial = TelaInicial()
+            self.window.show_view(tela_inicial)
+
+
+class TelaGameOver(arcade.View):
+    def __init__(self):
+        super().__init__()
+
+    def on_draw(self):
+        self.clear()
+        arcade.set_background_color(arcade.color.BLACK)
+        arcade.draw_text("Game over, você ficou devendo pros fantasmas", LARGURA / 2, ALTURA / 2, arcade.color.RED, 20, anchor_x="center")
+        arcade.draw_text("Pressione [ESC] para voltar ao menu", LARGURA / 2, ALTURA / 2 - 50, arcade.color.GRAY, 14, anchor_x="center")
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            tela_inicial = TelaInicial()
+            self.window.show_view(tela_inicial)
+
             
 class JogoView(arcade.View):
     def __init__(self):
@@ -94,12 +142,16 @@ class JogoView(arcade.View):
         self.lista_moedas = None
         self.fisica = None
         self.pontuacao = 0
+        self.respawn_timer = 0.0
+        self.aguardando_respawn = False
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.SKY_BLUE)
 
     def setup(self):
         self.pontuacao = 0
+        self.respawn_timer = 0.0
+        self.aguardando_respawn = False
         self.player = Player()
 
         self.lista_player = arcade.SpriteList()
@@ -161,7 +213,7 @@ class JogoView(arcade.View):
 
     def resetar_moedas(self):
         self.lista_moedas.clear()
-        moedas_pos = [(200, 200), (400, 310), (600, 260), (300, 410), (550, 460)]
+        moedas_pos = [(200, 200), (400, 310), (600, 260), (300, 460), (550, 460)]
         for mx, my in moedas_pos:
             self.lista_moedas.append(Coin(mx, my))
 
@@ -171,7 +223,7 @@ class JogoView(arcade.View):
         self.player.left = max(self.player.left, 0)
         self.player.right = min(self.player.right, LARGURA)
         for inimigo in self.lista_inimigos:
-            inimigo.on_update()
+            inimigo.on_update(self.player)
             
         if self.player.top >= ALTURA:
             self.player.top = ALTURA
@@ -201,6 +253,26 @@ class JogoView(arcade.View):
         for moeda in moedas_coletadas:
             moeda.remove_from_sprite_lists()
             self.pontuacao += 1
+
+        if self.pontuacao >= 25:
+            tela_vitoria = TelaVitoria()
+            self.window.show_view(tela_vitoria)
+            return
+
+        if self.pontuacao <= -1:
+            tela_game_over = TelaGameOver()
+            self.window.show_view(tela_game_over)
+            return
+
+        if len(self.lista_moedas) == 0:
+            if not self.aguardando_respawn:
+                self.aguardando_respawn = True
+                self.respawn_timer = 0.5
+            else:
+                self.respawn_timer -= delta_time
+                if self.respawn_timer <= 0:
+                    self.resetar_moedas()
+                    self.aguardando_respawn = False
 
         if self.player.top < 0:
             self.setup()      
