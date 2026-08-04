@@ -239,14 +239,33 @@ class JogoView(arcade.View):
         self.lista_inimigos.append(inimigos_pequeno1)
         self.lista_inimigos.append(inimigos_pequeno2)
 
+	# SpriteList que vai guardar todas as plataformas (chão + blocos flutuantes).
+    # use_spatial_hash=True: otimização de colisão. Divide o espaço da tela em
+    # "células" (grid) e o Arcade só checa colisão contra sprites que estão na
+    # mesma célula do player, em vez de checar contra TODOS os sprites da lista.
+    # Só compensa pra objetos que não se movem (ou se movem raramente) — se
+    # ativasse isso numa lista de sprites que mudam de posição todo frame
+    # (tipo os inimigos), o custo de recalcular o hash a cada frame anularia
+    # o ganho de performance.
+
         self.lista_plataformas = arcade.SpriteList(use_spatial_hash=True)
 
+    # Cria o "chão" da fase, lado a lado, cobrindo toda a largura da tela.
+    # range(0, LARGURA + 64, 64): começa em x=0, vai até passar de LARGURA,
+    # pulando de 64 em 64 (64 = a própria largura de cada bloco de chão).
+    # O "+ 64" no limite garante que o último bloco cubra até a borda direita
+    # da tela, sem deixar buraco no fim.
+
         for x in range(0, LARGURA + 64, 64):
+		# SpriteSolidColor cria um sprite "sólido" sem imagem, só um retângulo
+        # colorido de 64x20 pixels (largura x altura), na cor verde escuro.
             chao = arcade.SpriteSolidColor(64, 20, arcade.color.DARK_GREEN)
             chao.center_x = x
             chao.center_y = 20
             self.lista_plataformas.append(chao)
 
+	    # Coordenadas (x, y) das plataformas flutuantes que o player pode pular
+   		# em cima. São fixas, escolhidas manualmente pra desenhar o layout da fase.
         plataformas = [
             (200, 150), (400, 250), (600, 200), (300, 400), (550, 400),
         ]
@@ -256,11 +275,21 @@ class JogoView(arcade.View):
             plat.center_y = py
             self.lista_plataformas.append(plat)
 
+		# Lista separada pras moedas — também usa spatial hash pelo mesmo motivo
+		# das plataformas: moedas ficam paradas até serem coletadas, então vale
+		# a pena otimizar a checagem de colisão contra elas.
+
         self.lista_moedas = arcade.SpriteList(use_spatial_hash=True)
         moedas_pos = [(200, 200), (400, 310), (600, 260), (300, 460), (550, 460)]
         for mx, my in moedas_pos:
             self.lista_moedas.append(Coin(mx, my))
-
+		# Motor de física pronto do Arcade, feito especificamente pra jogos de
+		# plataforma (plataformer = jogo tipo Mario, com pulo e gravidade).
+		# Ele cuida automaticamente de:
+		#   - aplicar gravidade no player a cada frame (puxando ele pra baixo)
+		#   - detectar quando o player está em cima de uma plataforma (pra permitir
+		#     pular de novo, via fisica.can_jump())
+		#   - impedir o player de atravessar as plataformas (colisão sólida)
         self.fisica = arcade.PhysicsEnginePlatformer(
             self.player,
             gravity_constant=GRAVIDADE,
@@ -332,7 +361,7 @@ class JogoView(arcade.View):
             self.player, self.lista_inimigos
         )
         for inimigo in colisao_inimigo:
-            if inimigo.pequeno and self.player.i_frame:
+            if inimigo.pequeno and not self.player.i_frame:
                 self.pontuacao -= 1
                 self.timer_alerta = 1.5
                 self.tomou_dano = True
@@ -414,7 +443,4 @@ def main():
     menu = TelaInicial()
     janela.show_view(menu)
     arcade.run()
-
-
-if __name__ == "__main__":
-    main()
+main()
