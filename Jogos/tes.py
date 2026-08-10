@@ -308,10 +308,8 @@ class TelaPartidaAtiva(arcade.View):
         self.jogador.left = 10
         self.jogador.bottom = 100
         self.grupo_heroi.append(self.jogador)
-
-        for _ in range(25):
-            x = random.randint(50, DIMENSAO_X - 50)
-            y = random.randint(50, DIMENSAO_Y - 50)
+        moedas_pos = [(200, 280), (450, 360), (650, 280)]
+        for x, y in moedas_pos:
             self.grupo_tesouros.append(ItemMoedaPadrao(x, y))
 
         moeda_especial = ItemMoedaEspecial(100, 100, 2)
