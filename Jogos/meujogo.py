@@ -73,6 +73,117 @@ class Inimigo(arcade.Sprite):
                 self.change_y *= -1
 
 
+class InimigoGravidade(arcade.Sprite):
+    """
+    Fantasma que sofre efeito da gravidade (cai e fica em cima das
+    plataformas, igual o player) e persegue o player horizontalmente,
+    igual o fantasma grande. Pra diferenciar visualmente sem precisar
+    de uma imagem nova, ele usa uma cor de "tint" por cima da textura.
+    """
+
+    def __init__(self, x, y):
+        super().__init__("fantasma_right.png", 0.9)
+        self.center_x = x
+        self.center_y = y
+        self.change_x = 0
+        self.change_y = 0
+        self.velocidade = 2.2
+        self.velocidade_queda_max = 10
+        self.forca_pulo = 20
+        self.no_chao = False  # se está tocando uma plataforma/chão nesse frame
+
+        # Usado no on_update do JogoView e na checagem de dano, pra ele se
+        # comportar igual o fantasma grande (não teleporta, tira i-frame).
+        self.pequeno = False
+
+        self.textura_direita = self.texture
+        self.textura_esquerda = arcade.load_texture("fantasma_left.png")
+
+        # Tinge o fantasma de outra cor (ele continua sendo o mesmo sprite,
+        # só multiplica a textura por essa cor). Se quiser outra cor, é só
+        # trocar esse valor.
+        self.color = arcade.color.PURPLE
+
+    def teleportar(self):
+        # Mantido só por compatibilidade, caso algum outro trecho do código
+        # chame teleportar() em qualquer inimigo. Esse fantasma não usa isso.
+        self.center_x = random.randint(50, LARGURA - 50)
+        self.center_y = ALTURA - 50
+
+    def aplicar_gravidade(self, plataformas):
+        self.change_y -= GRAVIDADE
+        if self.change_y < -self.velocidade_queda_max:
+            self.change_y = -self.velocidade_queda_max
+
+        self.center_y += self.change_y
+
+        # Colisão vertical com as plataformas: se ele tava caindo e bateu
+        # em cima de uma plataforma, para ele em cima dela (igual chão).
+        # Também atualiza self.no_chao, que é o que ele usa pra saber se
+        # PODE pular agora.
+        self.no_chao = False
+        colisoes = arcade.check_for_collision_with_list(self, plataformas)
+        for plataforma in colisoes:
+            if self.change_y <= 0:
+                self.bottom = plataforma.top
+                self.change_y = 0
+                self.no_chao = True
+            else:
+                self.top = plataforma.bottom
+                self.change_y = 0
+
+        if self.bottom <= 0:
+            self.bottom = 0
+            self.change_y = 0
+            self.no_chao = True
+
+    def mover_e_pular(self, player, plataformas):
+        # Escolhe a direção horizontal em direção ao player.
+        direcao = 0
+        if self.center_x < player.center_x - 2:
+            direcao = 1
+            self.texture = self.textura_direita
+        elif self.center_x > player.center_x + 2:
+            direcao = -1
+            self.texture = self.textura_esquerda
+
+        x_antigo = self.center_x
+        if direcao != 0:
+            self.center_x += direcao * self.velocidade
+            self.center_x = max(0, min(LARGURA, self.center_x))
+
+        # Depois de mover, checa se o movimento fez ele "entrar" numa
+        # plataforma pela lateral (ou seja, bateu numa parede/degrau que tá
+        # na frente dele, não uma plataforma embaixo dos pés). Isso é o que
+        # o deixava "burro": ele simplesmente ficava empurrando a parede.
+        bateu_parede = False
+        if direcao != 0:
+            for plataforma in arcade.check_for_collision_with_list(self, plataformas):
+                if self.bottom < plataforma.top - 4:
+                    bateu_parede = True
+                    break
+
+        if bateu_parede:
+            # Desfaz o movimento lateral e, se estiver no chão, pula pra
+            # tentar passar por cima do obstáculo.
+            self.center_x = x_antigo
+            if self.no_chao:
+                self.change_y = self.forca_pulo
+                self.no_chao = False
+        elif self.no_chao and player.center_y > self.center_y + 30:
+            # O player está bem mais alto que ele (numa plataforma acima) e
+            # ele não bateu em parede nenhuma: mesmo assim tenta pular pra
+            # se aproximar, em vez de ficar parado esperando no chão.
+            self.change_y = self.forca_pulo
+            self.no_chao = False
+
+    def on_update(self, player=None, plataformas=None):
+        if plataformas is not None:
+            self.aplicar_gravidade(plataformas)
+        if player is not None and plataformas is not None:
+            self.mover_e_pular(player, plataformas)
+
+
 class Coin(arcade.Sprite):
     def __init__(self, x, y):
         super().__init__("coin.png", 1)
@@ -234,10 +345,10 @@ class JogoView(arcade.View):
         self.lista_inimigos = arcade.SpriteList()
         inimigos = Inimigo(500, 100, False)
         inimigos_pequeno1 = Inimigo(400, 100, True)
-        inimigos_pequeno2 = Inimigo(600, 100, True)
+        inimigo_gravidade = InimigoGravidade(600, ALTURA - 50)
         self.lista_inimigos.append(inimigos)
         self.lista_inimigos.append(inimigos_pequeno1)
-        self.lista_inimigos.append(inimigos_pequeno2)
+        self.lista_inimigos.append(inimigo_gravidade)
 
 	# SpriteList que vai guardar todas as plataformas (chão + blocos flutuantes).
     # use_spatial_hash=True: otimização de colisão. Divide o espaço da tela em
@@ -343,7 +454,12 @@ class JogoView(arcade.View):
         self.player.left = max(self.player.left, 0)
         self.player.right = min(self.player.right, LARGURA)
         for inimigo in self.lista_inimigos:
-            inimigo.on_update(self.player)
+            # O InimigoGravidade precisa saber das plataformas pra não
+            # atravessar o chão/blocos, então ele recebe um argumento a mais.
+            if isinstance(inimigo, InimigoGravidade):
+                inimigo.on_update(self.player, self.lista_plataformas)
+            else:
+                inimigo.on_update(self.player)
             
         if self.player.top >= ALTURA:
             self.player.top = ALTURA
