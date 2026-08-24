@@ -6,8 +6,20 @@ ALTURA = 600
 LARGURA = 800
 TITULO = "Meu Jogo"
 VELOCIDADE = 5
-VELOCIDADE_PULO = 15
-GRAVIDADE = 0.8
+VELOCIDADE_PULO = 10
+GRAVIDADE = 0.5
+
+
+class Bloco(arcade.Sprite):
+    """
+    Mesmo Bloco do molde: um sprite de chão/plataforma feito a partir de
+    uma imagem ("bloco.png"), em vez de um retângulo colorido gerado por
+    código (arcade.SpriteSolidColor).
+    """
+    def __init__(self, x: float, y: float):
+        super().__init__("bloco.png", scale=0.25)
+        self.center_x = x
+        self.center_y = y
 
 
 class Player(arcade.Sprite):
@@ -85,12 +97,8 @@ class InimigoGravidade(arcade.Sprite):
         super().__init__("fantasma_right.png", 0.9)
         self.center_x = x
         self.center_y = y
-        self.change_x = 0
-        self.change_y = 0
         self.velocidade = 2.2
-        self.velocidade_queda_max = 10
-        self.forca_pulo = 20
-        self.no_chao = False  # se está tocando uma plataforma/chão nesse frame
+        self.forca_pulo = 15
 
         # Usado no on_update do JogoView e na checagem de dano, pra ele se
         # comportar igual o fantasma grande (não teleporta, tira i-frame).
@@ -110,78 +118,19 @@ class InimigoGravidade(arcade.Sprite):
         self.center_x = random.randint(50, LARGURA - 50)
         self.center_y = ALTURA - 50
 
-    def aplicar_gravidade(self, plataformas):
-        self.change_y -= GRAVIDADE
-        if self.change_y < -self.velocidade_queda_max:
-            self.change_y = -self.velocidade_queda_max
-
-        self.center_y += self.change_y
-
-        # Colisão vertical com as plataformas: se ele tava caindo e bateu
-        # em cima de uma plataforma, para ele em cima dela (igual chão).
-        # Também atualiza self.no_chao, que é o que ele usa pra saber se
-        # PODE pular agora.
-        self.no_chao = False
-        colisoes = arcade.check_for_collision_with_list(self, plataformas)
-        for plataforma in colisoes:
-            if self.change_y <= 0:
-                self.bottom = plataforma.top
-                self.change_y = 0
-                self.no_chao = True
-            else:
-                self.top = plataforma.bottom
-                self.change_y = 0
-
-        if self.bottom <= 0:
-            self.bottom = 0
-            self.change_y = 0
-            self.no_chao = True
-
-    def mover_e_pular(self, player, plataformas):
-        # Escolhe a direção horizontal em direção ao player.
-        direcao = 0
+    def decidir_direcao(self, player):
+        # A gravidade e a colisão com as plataformas quem cuida agora é o
+        # PhysicsEnginePlatformer (criado no JogoView.setup()), igual já
+        # acontecia com o player. Aqui só decidimos o change_x (pra que
+        # lado andar) e trocamos a textura — o resto o engine resolve.
         if self.center_x < player.center_x - 2:
-            direcao = 1
+            self.change_x = self.velocidade
             self.texture = self.textura_direita
         elif self.center_x > player.center_x + 2:
-            direcao = -1
+            self.change_x = -self.velocidade
             self.texture = self.textura_esquerda
-
-        x_antigo = self.center_x
-        if direcao != 0:
-            self.center_x += direcao * self.velocidade
-            self.center_x = max(0, min(LARGURA, self.center_x))
-
-        # Depois de mover, checa se o movimento fez ele "entrar" numa
-        # plataforma pela lateral (ou seja, bateu numa parede/degrau que tá
-        # na frente dele, não uma plataforma embaixo dos pés). Isso é o que
-        # o deixava "burro": ele simplesmente ficava empurrando a parede.
-        bateu_parede = False
-        if direcao != 0:
-            for plataforma in arcade.check_for_collision_with_list(self, plataformas):
-                if self.bottom < plataforma.top - 4:
-                    bateu_parede = True
-                    break
-
-        if bateu_parede:
-            # Desfaz o movimento lateral e, se estiver no chão, pula pra
-            # tentar passar por cima do obstáculo.
-            self.center_x = x_antigo
-            if self.no_chao:
-                self.change_y = self.forca_pulo
-                self.no_chao = False
-        elif self.no_chao and player.center_y > self.center_y + 30:
-            # O player está bem mais alto que ele (numa plataforma acima) e
-            # ele não bateu em parede nenhuma: mesmo assim tenta pular pra
-            # se aproximar, em vez de ficar parado esperando no chão.
-            self.change_y = self.forca_pulo
-            self.no_chao = False
-
-    def on_update(self, player=None, plataformas=None):
-        if plataformas is not None:
-            self.aplicar_gravidade(plataformas)
-        if player is not None and plataformas is not None:
-            self.mover_e_pular(player, plataformas)
+        else:
+            self.change_x = 0
 
 
 class Coin(arcade.Sprite):
@@ -345,10 +294,10 @@ class JogoView(arcade.View):
         self.lista_inimigos = arcade.SpriteList()
         inimigos = Inimigo(500, 100, False)
         inimigos_pequeno1 = Inimigo(400, 100, True)
-        inimigo_gravidade = InimigoGravidade(600, ALTURA - 50)
+        self.inimigo_gravidade = InimigoGravidade(600, ALTURA - 50)
         self.lista_inimigos.append(inimigos)
         self.lista_inimigos.append(inimigos_pequeno1)
-        self.lista_inimigos.append(inimigo_gravidade)
+        self.lista_inimigos.append(self.inimigo_gravidade)
 
 	# SpriteList que vai guardar todas as plataformas (chão + blocos flutuantes).
     # use_spatial_hash=True: otimização de colisão. Divide o espaço da tela em
@@ -362,17 +311,12 @@ class JogoView(arcade.View):
         self.lista_plataformas = arcade.SpriteList(use_spatial_hash=True)
 
     # Cria o "chão" da fase, lado a lado, cobrindo toda a largura da tela.
-    # range(0, LARGURA + 64, 64): começa em x=0, vai até passar de LARGURA,
-    # pulando de 64 em 64 (64 = a própria largura de cada bloco de chão).
-    # O "+ 64" no limite garante que o último bloco cubra até a borda direita
-    # da tela, sem deixar buraco no fim.
+    # Igual o molde: range(32, LARGURA + 32, 64) começa meio bloco pra
+    # dentro (32 = metade de 64) e cada Bloco já nasce centralizado no x,
+    # então os blocos ficam grudados um do lado do outro sem buraco.
 
-        for x in range(0, LARGURA + 64, 64):
-		# SpriteSolidColor cria um sprite "sólido" sem imagem, só um retângulo
-        # colorido de 64x20 pixels (largura x altura), na cor verde escuro.
-            chao = arcade.SpriteSolidColor(64, 20, arcade.color.DARK_GREEN)
-            chao.center_x = x
-            chao.center_y = 20
+        for x in range(32, LARGURA + 32, 64):
+            chao = Bloco(x=x, y=30)
             self.lista_plataformas.append(chao)
 
 	    # Coordenadas (x, y) das plataformas flutuantes que o player pode pular
@@ -381,9 +325,7 @@ class JogoView(arcade.View):
             (200, 150), (400, 250), (600, 200), (300, 400), (550, 400),
         ]
         for px, py in plataformas:
-            plat = arcade.SpriteSolidColor(128, 20, arcade.color.BROWN)
-            plat.center_x = px
-            plat.center_y = py
+            plat = Bloco(px, py)
             self.lista_plataformas.append(plat)
 
 		# Lista separada pras moedas — também usa spatial hash pelo mesmo motivo
@@ -403,6 +345,16 @@ class JogoView(arcade.View):
 		#   - impedir o player de atravessar as plataformas (colisão sólida)
         self.fisica = arcade.PhysicsEnginePlatformer(
             self.player,
+            gravity_constant=GRAVIDADE,
+            walls=self.lista_plataformas
+        )
+
+        # Mesma ideia do engine acima, mas pro fantasma de gravidade. Cada
+        # instância do PhysicsEnginePlatformer cuida de UM sprite só, então
+        # precisa de uma segunda instância — mas nada impede de reusar a
+        # mesma lista de plataformas como "walls" pras duas.
+        self.fisica_inimigo_gravidade = arcade.PhysicsEnginePlatformer(
+            self.inimigo_gravidade,
             gravity_constant=GRAVIDADE,
             walls=self.lista_plataformas
         )
@@ -454,12 +406,32 @@ class JogoView(arcade.View):
         self.player.left = max(self.player.left, 0)
         self.player.right = min(self.player.right, LARGURA)
         for inimigo in self.lista_inimigos:
-            # O InimigoGravidade precisa saber das plataformas pra não
-            # atravessar o chão/blocos, então ele recebe um argumento a mais.
-            if isinstance(inimigo, InimigoGravidade):
-                inimigo.on_update(self.player, self.lista_plataformas)
-            else:
-                inimigo.on_update(self.player)
+            # O InimigoGravidade não usa esse on_update: ele é movido pelo
+            # self.fisica_inimigo_gravidade logo abaixo, igual o player.
+            if inimigo is self.inimigo_gravidade:
+                continue
+            inimigo.on_update(self.player)
+
+        # Fantasma de gravidade: decide pra que lado andar e se deve pular,
+        # depois deixa o PhysicsEnginePlatformer aplicar gravidade/colisão.
+        x_antes = self.inimigo_gravidade.center_x
+        no_chao = self.fisica_inimigo_gravidade.can_jump()
+        self.inimigo_gravidade.decidir_direcao(self.player)
+
+        if no_chao and self.player.center_y > self.inimigo_gravidade.center_y + 30:
+            # Player numa plataforma bem mais alta: tenta pular na direção dele.
+            self.inimigo_gravidade.change_y = self.inimigo_gravidade.forca_pulo
+
+        self.fisica_inimigo_gravidade.update()
+
+        # Se ele tentou andar mas mal se moveu, é porque bateu numa parede
+        # (o engine não deixa atravessar). Nesse caso ele pula no próximo
+        # frame, em vez de ficar preso empurrando a parede pra sempre.
+        moveu_pouco = abs(self.inimigo_gravidade.center_x - x_antes) < 0.3
+        if self.inimigo_gravidade.change_x != 0 and moveu_pouco and no_chao:
+            self.inimigo_gravidade.change_y = self.inimigo_gravidade.forca_pulo
+
+        self.inimigo_gravidade.center_x = max(0, min(LARGURA, self.inimigo_gravidade.center_x))
             
         if self.player.top >= ALTURA:
             self.player.top = ALTURA
