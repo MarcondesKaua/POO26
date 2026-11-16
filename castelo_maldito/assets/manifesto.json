@@ -1,0 +1,140 @@
+{
+ "sprites/player": [
+  40,
+  72,
+  14,
+  14
+ ],
+ "sprites/zumbi": [
+  36,
+  64,
+  4,
+  4
+ ],
+ "sprites/morcego": [
+  40,
+  28,
+  4,
+  4
+ ],
+ "sprites/esqueleto": [
+  36,
+  68,
+  5,
+  5
+ ],
+ "sprites/cavaleiro": [
+  52,
+  80,
+  6,
+  6
+ ],
+ "sprites/medusa": [
+  36,
+  36,
+  2,
+  2
+ ],
+ "sprites/fantasma": [
+  40,
+  60,
+  2,
+  2
+ ],
+ "sprites/chefe": [
+  128,
+  144,
+  5,
+  5
+ ],
+ "sprites/osso": [
+  24,
+  24,
+  4,
+  4
+ ],
+ "sprites/bola_fogo": [
+  32,
+  32,
+  3,
+  3
+ ],
+ "sprites/adaga": [
+  36,
+  16,
+  1,
+  1
+ ],
+ "sprites/machado": [
+  36,
+  36,
+  4,
+  4
+ ],
+ "sprites/agua": [
+  20,
+  28,
+  4,
+  4
+ ],
+ "sprites/chama": [
+  40,
+  56,
+  4,
+  4
+ ],
+ "sprites/bumerangue": [
+  36,
+  36,
+  4,
+  4
+ ],
+ "sprites/pilar_fogo": [
+  52,
+  200,
+  4,
+  4
+ ],
+ "sprites/onda": [
+  44,
+  44,
+  2,
+  2
+ ],
+ "sprites/golpe": [
+  88,
+  80,
+  3,
+  3
+ ],
+ "sprites/itens": [
+  32,
+  32,
+  15,
+  15
+ ],
+ "sprites/vela": [
+  28,
+  56,
+  2,
+  2
+ ],
+ "sprites/checkpoint": [
+  40,
+  68,
+  3,
+  3
+ ],
+ "sprites/porta": [
+  72,
+  136,
+  2,
+  2
+ ],
+ "sprites/tocha": [
+  24,
+  52,
+  2,
+  2
+ ]
+}
